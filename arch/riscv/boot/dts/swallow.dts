@@ -1,0 +1,77 @@
+/dts-v1/;
+/ {
+	model = "ucbbar,nexell_swallow-bare,qemu";
+	compatible = "ucbbar,nexell_swallow-bare-dev";
+	#address-cells = <0x00000002>;
+	#size-cells = <0x00000002>;
+
+	chosen {
+		bootargs = "console=ttyS0,115200n8";
+		stdout-path = "serial0@208a0000";
+	};
+
+	cpus {
+		#address-cells = <0x00000001>;
+		#size-cells = <0x00000000>;
+		timebase-frequency = <10000000>;
+
+		cpu@0 {
+			device_type = "cpu";
+			reg = <0x00000000>;
+			status = "okay";
+			compatible = "riscv";
+			riscv,isa = "rv64imafdcsu";
+			mmu-type = "riscv,sv48";
+			clock-frequency = <1000000000>;
+
+			cpu0_intc: interrupt-controller {
+				#interrupt-cells = <0x00000001>;
+				interrupt-controller;
+				compatible = "riscv,cpu-intc";
+				linux,phandle = <0x00000001>;
+				phandle = <0x00000001>;
+			};
+		};
+	};
+
+	memory@80000000 {
+		device_type = "memory";
+		reg = <0x00000000 0x80000000 0x00000000 0x08000000>;
+	};
+
+	soc {
+		#address-cells = <0x00000002>;
+		#size-cells = <0x00000002>;
+		compatible = "ucbbar,nexell_swallow-bare-soc";
+		ranges;
+
+		clint@0x2000000 {
+			compatible = "riscv,clint0";
+			interrupts-extended = <&cpu0_intc 3 &cpu0_intc 7>;
+			reg = <0x00000000 0x02000000 0x00000000 0x00010000>;
+		};
+
+		plic: interrupt-controller@4000000 {
+			#interrupt-cells = <1>;
+			interrupt-controller;
+			compatible = "riscv,plic0";
+			riscv,ndev = <128>;
+			interrupts-extended = <&cpu0_intc 9 &cpu0_intc 11>;
+			reg = <0x00000000 0x0c000000 0x00000000 0x04000000>;
+			interrupt-parent = <&cpu0_intc>;
+		};
+
+	};
+
+	serial0@208a0000 {
+		compatible = "snps,dw-apb-uart";
+		reg = <0x00000000 0x208a0000 0x00000000 0x00001000>;
+		clock-frequency = <20000000>;
+		interrupts = <56>;
+		interrupt-parent = <&plic>;
+		reg-shift = <2>;
+		reg-io-width = <4>;
+		status = "okay";
+	};
+};
+
